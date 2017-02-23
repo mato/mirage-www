@@ -3,7 +3,7 @@ to get a working MirageOS installation. The examples below are in
 the [mirage-skeleton](http://github.com/mirage/mirage-skeleton) repository.
 Begin by cloning and changing directory to it:
 
-```
+```bash
 $ git clone git://github.com/mirage/mirage-skeleton.git
 $ cd mirage-skeleton
 ```
@@ -26,7 +26,8 @@ let's build a unikernel that simply starts and then exits -- nothing else. The
 code for this is, as you might hope, fairly short. First the unikernel itself:
 
 ```
-$ cat tutorial/noop/unikernel.ml
+(* tutorial/noop/unikernel.ml *)
+
 let start =
   Lwt.return_unit
 ```
@@ -40,7 +41,8 @@ point. We do this by writing a `config.ml` file that sits next to our
 `unikernel.ml` file:
 
 ```
-$ cat tutorial/noop/config.ml
+(* tutorial/noop/config.ml *)
+
 open Mirage
 
 let main =
@@ -163,7 +165,8 @@ as a functor. This is actually quite straightforward -- we simply wrap the
 `start` function in `unikernel.ml` inside some module. For example,
 
 ```
-$ cat tutorial/noop-functor/unikernel.ml
+(* tutorial/noop-functor/unikernel.ml *)
+
 module Main = struct
 
   let start =
@@ -178,7 +181,8 @@ completely different if you wish to put C programming firmly behind you!
 The only other change is to the corresponding invocation in `config.ml`:
 
 ```
-$ cat tutorial/noop-functor/config.ml
+(* tutorial/noop-functor/config.ml *)
+
 open Mirage
 
 let main =
@@ -201,7 +205,8 @@ the same-- go ahead and try that out by building the unikernel inside
 As a first step, let's build and run the MirageOS "Hello World" unikernel --
 this will print a log message with the word `hello` 4 times before terminating:
 
-```
+```bash
+$ ./hello
 2017-02-08 09:54:44 -01:00: INF [application] hello
 2017-02-08 09:54:45 -01:00: INF [application] hello
 2017-02-08 09:54:46 -01:00: INF [application] hello
@@ -211,6 +216,8 @@ this will print a log message with the word `hello` 4 times before terminating:
 First, let's look at the code:
 
 ```
+(* tutorial/hello/unikernel.ml *)
+
 open Lwt.Infix
 
 module Hello (Time : Mirage_time_lwt.S) = struct
@@ -245,7 +252,7 @@ compile-time, depending on the target that you are compiling for. This
 configuration is stored in `config.ml`, so let's take a look:
 
 ```
-$ cat tutorial/hello/config.ml
+(* tutorial/hello/config.ml *)
 
 open Mirage
 
@@ -298,7 +305,7 @@ timer.
 We invoke all this by configuring, building and finally running the resulting
 unikernel under Unix first.
 
-```
+```bash
 $ cd tutorial/hello
 $ mirage configure -t unix
 ```
@@ -308,14 +315,14 @@ evaluating the configuration file, a `main.ml` that represents the entry
 point of your unikernel, and an `opam` file with a list of the packages necessary to build
 the unikernel.
 
-```
+```bash
 $ make depend
 ```
 
 In order to automatically install the dependencies discovered by `mirage configure`
 in your current `opam` switch, execute `make depend`.
 
-```
+```bash
 $ make
 ```
 
@@ -328,7 +335,7 @@ Finally to run your application, as it is a standard Unix binary, simply run it
 directly and observe the exciting log messages that our `for` loop is
 generating:
 
-```
+```bash
 $ ./hello
 ```
 
@@ -338,7 +345,7 @@ $ ./hello
 
 To make a unikernel that will use [Solo5](https://github.com/solo5/solo5) to run on KVM, re-run `mirage configure` and ask for the `ukvm` target instead of `unix`.
 
-```
+```bash
 $ mirage configure -t ukvm
 $ make depend
 $ make
@@ -351,7 +358,7 @@ instead of Unix.
 
 When you build the `ukvm` version, you'll see some new artifacts: a `ukvm-bin` binary and a file called `hello.ukvm`.  `hello.ukvm` is the unikernel, and `ukvm-bin` is a dynamically-generated monitor program specialised to your unikernel. To try running `hello.ukvm`, pass it as an argument to `ukvm-bin`:
 
-```
+```bash
 $ ./ukvm-bin hello.ukvm
             |      ___|
   __|  _ \  |  _ \ __ \
@@ -382,8 +389,8 @@ It's very common to pass additional runtime information to a program via command
 Mirage provides a nice abstraction for this in the form of configuration keys.  The `Mirage` module provides a module `Key`, which contains functions for creating and using configuration keys.  For an example, let's have a look at `hello-key`:
 
 ```
-$ cd tutorial/hello-key
-$ cat config.ml
+(* tutorial/hello-key/config.ml *)
+
 open Mirage
 
 let key =
@@ -406,7 +413,7 @@ Once we've created our configuration key, we specify that we'd like it used in t
 
 Let's configure the example for UNIX and build it:
 
-```
+```bash
 $ mirage configure -t unix
 $ make depend
 $ make
@@ -414,8 +421,8 @@ $ make
 
 When the target is Unix, Mirage will use an implementation for configuration keys that looks at the contents of `OS.Env.argv` -- in other words, it looks directly at the command line that was used to invoke the program.  If we call `hello` with no arguments, the default value is used:
 
-```
-./hello
+```bash
+$ ./hello
 2017-02-08 18:18:23 -03:00: INF [application] Hello World!
 2017-02-08 18:18:24 -03:00: INF [application] Hello World!
 2017-02-08 18:18:25 -03:00: INF [application] Hello World!
@@ -424,8 +431,7 @@ When the target is Unix, Mirage will use an implementation for configuration key
 
 but we can ask for something else:
 
-```
-./hello --hello="Bonjour!"
+```bash
 $ ./hello --hello="Bonjour!"
 2017-02-08 18:20:46 +09:00: INF [application] Bonjour!
 2017-02-08 18:20:47 +09:00: INF [application] Bonjour!
@@ -437,7 +443,7 @@ When the target is Unix, it's also possible to get useful hints by calling the g
 
 Many configuration keys can be specified either at configuration time or at run time.  `mirage configure` will allow us to change the default value for `hello`, while retaining the ability to override it at runtime:
 
-```
+```bash
 $ mirage configure -t unix --hello="Hola!"
 $ make depend
 $ make
@@ -455,7 +461,7 @@ $ ./hello --hello="Hi!"
 
 When configured for non-Unix backends, other mechanisms are used to pass the runtime information to the unikernel.  `ukvm-bin`, which we used to run `hello.ukvm` in the non-keyed example, will pass keys specified on the command line to the unikernel when invoked:
 
-```
+```bash
 $ cd tutorial/hello-key
 $ mirage configure -t ukvm
 $ make depend
@@ -500,6 +506,8 @@ On Unix, the development workflow to handle block devices is by mapping them
 onto local files. The `config.ml` for the block example contains some logic for automatically creating a disk image file (and removing it when `mirage clean` is called), in addition to a more familiar-looking set of calls to `foreign` and `register`:
 
 ```
+(* device-usage/block/config.ml *)
+
 open Mirage
 
 type shellconfig = ShellConfig
@@ -551,7 +559,7 @@ block device from a local file via `block_of_file`.
 
 Build this on Unix in the same way as the previous examples:
 
-```
+```bash
 $ cd device-usage/block
 $ mirage configure -t unix
 $ make depend
@@ -565,7 +573,7 @@ same (the logic for this is in `unikernel.ml` within the `Block_test` module).
 
 We can build this example for another backend too:
 
-```
+```bash
 $ mirage configure -t ukvm
 $ make depend
 $ make
@@ -579,8 +587,7 @@ relying on the host OS (the Linux or FreeBSD kernel).
 
 If we tell `ukvm-bin` where the disk image is, it will provide that disk image to the unikernel:
 
-```
-
+```bash
 $ ./ukvm-bin --disk=disk.img block_test.ukvm
             |      ___|
   __|  _ \  |  _ \ __ \
@@ -636,6 +643,8 @@ The `config.ml` might look familiar after the earlier block and console
 examples:
 
 ```
+(* device-usage/kv_ro/config.ml *)
+
 open Mirage
 
 let disk1 = generic_kv_ro "t"
@@ -662,14 +671,14 @@ Using `generic_kv_ro` in your `config.ml` causes to Mirage to automatically crea
 configuration key, `kv_ro`, which you can use to request a specific implementation
 of the key-value store's implementation.  To see documentation, try:
 
-```
+```bash
 $ cd device-usage/kv_ro
 $ mirage help configure
 ```
 
 Under the "UNIKERNEL PARAMETERS" section, you should see:
 
-```
+```bash
        --kv_ro=KV_RO (absent=crunch)
            Use a fat, archive, crunch or direct pass-through implementation
            for the unikernel.
@@ -679,7 +688,7 @@ More documentation is available at [the `Mirage` module documentation for generi
 
 Let's try a few different kinds of key-value implementations.  First, we'll build a Unix version.  If we don't specify which kind of `kv_ro` we want, we'll get a `crunch` implementation, the contents of which we can see at `static1.ml`:
 
-```
+```bash
 $ cd device-usage/kv_ro
 $ mirage configure -t unix
 $ make depend
@@ -690,7 +699,7 @@ $ ./kv_ro
 
 We can use the `direct` implementation with the Unix target as well:
 
-```
+```bash
 $ cd device-usage/kv_ro
 $ mirage configure -t unix --kv_ro=direct
 $ make depend
@@ -733,6 +742,7 @@ just as we configured the key-value store in the previous example.  The example 
 the `device-usage/network` directory of `mirage-skeleton` is illustrative:
 
 ```
+(* device-usage/network/config.ml *)
 
 open Mirage
 
@@ -760,7 +770,7 @@ The network device is derived from `default_network`, a function provided by Mir
 Let's get the network stack compiling using the standard Unix sockets APIs
 first.
 
-```
+```bash
 $ cd device-usage/network
 $ mirage configure -t unix --net socket
 $ make depend
@@ -774,7 +784,7 @@ Let's try talking to it using
 the commonly available _netcat_ `nc(1)` utility. From a different console
 execute:
 
-```
+```bash
 $ echo -n hello tcp world | nc -nw1 127.0.0.1 8080
 ```
 
@@ -786,13 +796,13 @@ isn't being output.  That's because we haven't specified the log level for
 is sent with the log level set to `debug`, so to see it, we need to run `./network`
 with a higher log level for all logs:
 
-```
+```bash
 $ ./network -l "*:debug"
 ```
 
 The program will then output the debug-level logs, which include the content of any messages it reads.  Here's an example of what you might see:
 
-```
+```bash
 $ ./network -l "*:debug"
 2017-02-10 17:23:24 +02:00: INF [tcpip-stack-socket] Manager: connect
 2017-02-10 17:23:24 +02:00: INF [tcpip-stack-socket] Manager: configuring
@@ -807,7 +817,7 @@ Next, let's try using the direct MirageOS network stack.  It will be necessary t
 
 To configure via DHCP:
 
-```
+```bash
 $ cd device-usage/network 
 $ mirage configure -t unix --dhcp true --net direct
 $ make depend
@@ -833,7 +843,7 @@ show`; if you do not, load the tuntap kernel module (`$ sudo modprobe tun`) and
 create a `tap0` interface owned by you (`$ sudo tunctl -u $USER -t tap0`). Bring
 `tap0` up using `$ sudo ifconfig tap0 10.0.0.1 up`, then:
 
-```
+```bash
 $ cd device-usage/network
 $ mirage configure -t unix --dhcp false --net direct
 $ make depend
@@ -849,7 +859,7 @@ For macosx:
 
 Now you should be able to ping the unikernel's interface:
 
-```
+```bash
 $ ping 10.0.0.2
 PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
 64 bytes from 10.0.0.2: icmp_seq=1 ttl=38 time=0.527 ms
@@ -864,13 +874,13 @@ rtt min/avg/max/mdev = 0.291/0.395/0.527/0.098 ms
 Finally, you can then execute the same `nc(1)` commands as before (modulo the
 target IP address of course!) to interact with the running unikernel:
 
-```
+```bash
 $ echo -n hello tcp world | nc -nw1 10.0.0.2 8080
 ```
 
 And you will see the same output in the unikernel's terminal:
 
-```
+```bash
 read: 15 "hello tcp world"
 ```
 
@@ -878,7 +888,7 @@ read: 15 "hello tcp world"
 
 Let's make a network-enabled unikernel!  The IP configuration should be similar to what you've set up in the previous examples, but instead of `-t unix` or `-t macosx`, build with a `ukvm` target.  If you need to specify a static IP address, remember that it should go at the end of the command in which you invoke `ukvm-bin`, just like the argument to `hello` in the `hello-key` example.
 
-```
+```bash
 $ cd device-usage/network
 $ mirage configure -t ukvm --dhcp true # for environments where DHCP works
 $ make depend
